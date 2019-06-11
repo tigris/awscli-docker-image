@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -euo pipefail
+
+cd $(dirname $0)/..
+
+LATEST=$(head -n1 versions.txt)
+
+for VERSION in $(cat versions.txt); do
+  docker build --build-arg AWSCLI_VERSION=$VERSION --tag tigris/awscli:$VERSION .
+  if [ "${VERSION}" == "${LATEST}" ]; then
+    docker tag tigris/awscli:$VERSION tigris/awscli:latest
+  fi
+done
