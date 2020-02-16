@@ -4,11 +4,21 @@ set -euo pipefail
 
 cd $(dirname $0)/..
 
-LATEST=$(head -n1 versions.txt)
+semantic_versions() {
+  case $1 in
+    *.*) printf %s "$1 $(semantic_versions ${1%\.*})" ;;
+    *) printf %s "$1"
+  esac
+}
 
-for VERSION in $(cat versions.txt); do
-  docker build --build-arg AWSCLI_VERSION=$VERSION --tag tigris/awscli:$VERSION .
-  if [ "${VERSION}" == "${LATEST}" ]; then
-    docker tag tigris/awscli:$VERSION tigris/awscli:latest
-  fi
+latest=$(head -n1 versions.txt)
+
+for version in $(cat versions.txt); do
+  docker build --build-arg AWSCLI_VERSION=$version --tag tigris/awscli:$version .
+
+  for semantic in $(semantic_versions $version); do
+    docker tag tigris/awscli:${version} tigris/awscli:${semantic}
+  done
 done
+
+docker tag tigris/awscli:$latest tigris/awscli:latest

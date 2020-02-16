@@ -6,8 +6,19 @@ cd $(dirname $0)/..
 
 auto/build
 
-for VERSION in $(cat versions.txt); do
-  docker push tigris/awscli:$VERSION
-done
+semantic_versions() {
+  case $1 in
+    *.*) printf %s "$1 $(semantic_versions ${1%\.*})" ;;
+    *) printf %s "$1"
+  esac
+}
 
 docker push tigris/awscli:latest
+
+for version in $(cat versions.txt); do
+  for semantic in $(semantic_versions $version); do
+    docker tag tigris/awscli:${version} tigris/awscli:${semantic}
+    docker push tigris/awscli:${semantic}
+  done
+done
+
